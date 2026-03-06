@@ -92,6 +92,13 @@ class MalayalamSandhi:
         'ക്ഷ', 'ത്ര', 'ജ്ഞ',       # Conjuncts used as consonants
     ]
     
+    # Consonant-initial suffixes that need vowel insertion
+    CONSONANT_INITIAL_SUFFIXES = {
+        'ണം': {'vowel': 'അ', 'description': 'must/should modality'},
+        'ക': {'vowel': 'ു', 'description': 'infinitive marker'},
+        'നു': {'vowel': 'ിൻ', 'description': 'past marker variant'},
+    }
+    
     def __init__(self):
         self.rules = self._initialize_rules()
     
@@ -269,24 +276,67 @@ class MalayalamSandhi:
             
         Returns:
             Combined form after sandhi transformation
+            
+        Key Rules:
+        1. Anusvara (ം) + vowel sign: ം → ത്ത് (noun case inflection)
+        2. Stem (virama) + vowel sign: Remove virama, add suffix
+        3. Stem (virama) + consonant-initial suffix: Insert vowel
+        4. Vowel-ending + vowel: Apply lopa (elision)
         """
         # Get vowels at boundary
         left_vowel = self.get_final_vowel(left)
         right_vowel = self.get_initial_vowel(right)
         
-        # Case 1: Left ends with virama - no transformation needed
-        if left.endswith(self.VIRAMA):
-            # Remove virama if right starts with vowel sign
+        # Case 0: NOUN CASE INFLECTION - ം (anusvara) transformation
+        # This is Gemini's critical feedback - MUST HANDLE FIRST!
+        # വിദ്യാലയം + ിൽ → വിദ്യാലയത്തിൽ
+        if left.endswith(self.ANUSVARA):
             if right_vowel and right_vowel[1] == 'dependent':
-                # Left ends with virama, right starts with vowel sign
-                # Just concatenate (virama is replaced by vowel sign)
-                return left[:-1] + right
-            elif right and right[0] in self.INDEPENDENT_VOWELS:
-                # Left ends with virama, right starts with independent vowel
-                # Rare case, just concatenate
+                # Anusvara (ം) transforms to ത്ത് before vowel-initial case markers
+                # The ത്ത് + vowel_sign becomes ത്തിൽ (remove virama, add vowel)
+                # So: remove ം, add ത്ത, then add vowel sign directly
+                # Example: വിദ്യാലയം + ിൽ → വിദ്യാലയ + ത്ത + ിൽ = വിദ്യാലയത്തിൽ
+                return left[:-1] + 'ത്ത' + right
+            elif right and right[0] in self.CONSONANTS:
+                # Anusvara before consonant - usually stays as anusvara or changes
+                # For now, just concatenate (may need more rules)
                 return left + right
             else:
-                # Normal case: stem + suffix starting with consonant
+                # Default: just concatenate
+                return left + right
+        
+        # Case 1: Left ends with virama - need special handling
+        if left.endswith(self.VIRAMA):
+            # Subcase 1a: Right starts with vowel sign (dependent vowel)
+            if right_vowel and right_vowel[1] == 'dependent':
+                # Remove virama and concatenate
+                # Example: പഠിക്ക് + ുന്നു = പഠിക്കുന്നു
+                return left[:-1] + right
+            
+            # Subcase 1b: Right starts with independent vowel
+            elif right and right[0] in self.INDEPENDENT_VOWELS:
+                # Rare case, just concatenate
+                return left + right
+            
+            # Subcase 1c: Right starts with consonant - INSERT VOWEL
+            elif right and right[0] in self.CONSONANTS:
+                # Need to insert vowel between stem and consonant-initial suffix
+                # Example: പഠിക്ക് + ണം = പഠിക്കണം
+                
+                # Check if suffix is in our known consonant-initial suffixes
+                for suffix_pattern, info in self.CONSONANT_INITIAL_SUFFIXES.items():
+                    if right == suffix_pattern or right.endswith(suffix_pattern):
+                        # Insert the appropriate vowel
+                        vowel = info['vowel']
+                        # Remove virama, add vowel, add suffix
+                        return left[:-1] + vowel + right
+                
+                # Default: insert 'അ' (a) for unknown consonant-initial suffixes
+                # This is the most common case in Malayalam
+                return left[:-1] + 'അ' + right
+            
+            else:
+                # Normal case: stem + suffix starting with something else
                 return left + right
         
         # Case 2: Both have vowels - apply lopa (elision)
@@ -374,21 +424,53 @@ def get_proper_root_suffix(word: str, analyzer_root: str) -> Tuple[str, str]:
     """
     sandhi = MalayalamSandhi()
     
-    # The analyzer root is usually the infinitive form
-    # Convert to stem form
-    stem = sandhi.to_stem_form(analyzer_root)
+    # The analyzer root is usually the infinitive form (ending in ക് or കുക)
+    # We need to extract the actual stem used in the word
     
-    # Find where the stem appears in the word
+    # Special handling for common patterns:
+    # Infinitive പഠിക്കുക → stem പഠിക്ക് used in പഠിക്കുന്നു, പഠിക്കണം, പഠിച്ചു
+    # Infinitive വരുക → stem വര് used in വരുന്നു, past form വന്നു
+    
+    # Pattern 1: Infinitive ends in കുക (e.g., പഠിക്കുക → പഠിക്ക്)
+    if analyzer_root.endswith('ുക'):
+        # Remove 'ുക' and add '്' to get stem
+        stem = analyzer_root[:-2] + '്'
+        stem_base = stem[:-1]  # Remove virama for matching
+        
+        if word.startswith(stem_base):
+            suffix = word[len(stem_base):]
+            return (stem, suffix)
+    
+    # Pattern 2: Infinitive ends in ക (e.g., വരുക → വര്)
+    if analyzer_root.endswith('ക') and not analyzer_root.endswith('ുക'):
+        # Remove 'ക' and add '്' to get stem
+        stem = analyzer_root[:-1] + '്'
+        stem_base = stem[:-1]
+        
+        if word.startswith(stem_base):
+            suffix = word[len(stem_base):]
+            return (stem, suffix)
+    
+    # Pattern 3: Root is noun (ends in ം), remove ം and add ്
+    if analyzer_root.endswith('ം'):
+        stem = analyzer_root[:-1] + '്'
+        stem_base = stem[:-1]
+        
+        if word.startswith(stem_base):
+            suffix = word[len(stem_base):]
+            return (stem, suffix)
+    
+    # Default: convert to stem form and try to find match
+    stem = sandhi.to_stem_form(analyzer_root)
     stem_base = stem[:-1] if stem.endswith('്') else stem
     
     if word.startswith(stem_base):
-        # Found the stem at the start
         suffix = word[len(stem_base):]
         return (stem, suffix)
     
     # Try alternative approach: look for common suffix patterns
     common_suffixes = [
-        'ുന്നു', 'ിക്കുന്നു', 'ച്ചു', 'ിട്ടു', 'ും', 'ാൻ', 
+        'ുന്നു', 'ിക്കുന്നു', 'ച്ചു', 'ിട്ടു', 'ും', 'ാൻ', 'ണം',
         'ിയ', 'ുന്ന', 'ിൽ', 'ിന്', 'ിന്റെ', 'ിലെ',
     ]
     
@@ -404,3 +486,4 @@ def get_proper_root_suffix(word: str, analyzer_root: str) -> Tuple[str, str]:
     
     # Fallback
     return (stem, word[len(stem_base):] if word.startswith(stem_base) else '')
+    
