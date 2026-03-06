@@ -240,4 +240,3 @@ class HierarchicalVocabulary:
         for token_type in self.TOKEN_RANGES.keys():
             type_counts[token_type] = len(self.get_tokens_by_type(token_type))
         return f"HierarchicalVocabulary(total={len(self)}, types={type_counts})"
-        
