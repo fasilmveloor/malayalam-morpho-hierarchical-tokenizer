@@ -1,0 +1,49 @@
+{
+  "morpho-hierarchical": {
+    "total_words": 28447,
+    "total_tokens": 40174,
+    "unique_tokens": 14183,
+    "avg_tokens_per_word": 1.4122403065349598,
+    "compression_ratio": 0.7080947876736198,
+    "morphological_alignment": 0.23072136207497387,
+    "processing_time": 19.602882623672485,
+    "words_per_second": 1451.1641244868415,
+    "vocab_breakdown": {
+      "root": 1000,
+      "tense": 590,
+      "case": 104,
+      "function": 25,
+      "subword": 3268
+    }
+  },
+  "bpe": {
+    "total_words": 28447,
+    "total_tokens": 63716,
+    "unique_tokens": 4572,
+    "avg_tokens_per_word": 2.239814391675748,
+    "compression_ratio": 0.44646556594889825,
+    "morphological_alignment": 0.15344654403917382,
+    "processing_time": 0.17380142211914062,
+    "words_per_second": 163675.30054213034
+  },
+  "unigram": {
+    "total_words": 28447,
+    "total_tokens": 62654,
+    "unique_tokens": 4753,
+    "avg_tokens_per_word": 2.2024818082750377,
+    "compression_ratio": 0.4540332620423277,
+    "morphological_alignment": 0.1555048360838893,
+    "processing_time": 0.13211584091186523,
+    "words_per_second": 215318.61587269505
+  },
+  "character": {
+    "total_words": 28447,
+    "total_tokens": 28447,
+    "unique_tokens": 15620,
+    "avg_tokens_per_word": 1.0,
+    "compression_ratio": 1.0,
+    "morphological_alignment": 0.29887158575596723,
+    "processing_time": 0.04719972610473633,
+    "words_per_second": 602694.1753194928
+  }
+}

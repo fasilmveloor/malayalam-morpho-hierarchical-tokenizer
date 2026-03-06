@@ -1,0 +1,33 @@
+{
+  "corpus": {
+    "tokens": 28923,
+    "types": 15885
+  },
+  "results": [
+    {
+      "name": "BPE",
+      "speed": 281746.5136899804,
+      "unique_tokens": 4573,
+      "avg_tokens": 3.003525338369531,
+      "compression": 0.9220421004068692,
+      "vocab_reduction": 71.21183506452628
+    },
+    {
+      "name": "Unigram",
+      "speed": 476387.260914997,
+      "unique_tokens": 4753,
+      "avg_tokens": 2.946868114573497,
+      "compression": 0.9220421004068692,
+      "vocab_reduction": 70.07869058860561
+    },
+    {
+      "name": "Morpho-Hierarchical",
+      "speed": 679.6741313805942,
+      "unique_tokens": 13722,
+      "avg_tokens": 1.8584198929807996,
+      "compression": 0.9928390990476794,
+      "vocab_reduction": 13.616619452313506
+    }
+  ],
+  "timestamp": "2026-03-06 10:55:42"
+}

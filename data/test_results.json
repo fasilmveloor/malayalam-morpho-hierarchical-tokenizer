@@ -1,0 +1,20 @@
+{
+  "total_words": 28923,
+  "total_tokens": 43041,
+  "unique_tokens": 10662,
+  "oov_words": 7538,
+  "morphology_coverage": 87.22470006569166,
+  "compression_ratio": 0.6719871750191677,
+  "avg_tokens_per_word": 1.4881236386266985,
+  "vocab_breakdown": {
+    "root": 1000,
+    "tense": 708,
+    "case": 434,
+    "function": 22,
+    "conjunct": 0,
+    "subword": 2820,
+    "special": 8
+  },
+  "processing_time": 19.007997035980225,
+  "words_per_second": 1521.6227120222964
+}
