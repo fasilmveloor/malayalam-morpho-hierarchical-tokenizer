@@ -54,4 +54,23 @@ Next steps: Optimize the `get_malayalam_syllables` regex logic to increase proce
 * **The Complexity Cost:** Avg Tokens/Word increased slightly to 1.52 as the neural model identifies more granular sub-morphemes. 
 * **The Bottleneck:** Throughput dropped significantly due to PyTorch inference overhead. Optimization (TorchScript/ONNX) is now a Priority 1 task.
 
+## [v0.4.0-beta] - 2026-03-06 (The Phonetic Era)
+**Focus:** Phoneme Feature Engineering & BIO Sequence Labeling
+**Architecture:** 10-dim Phoneme Vector + Bi-LSTM + BIO Softmax
+**Accuracy:** 91.67% (Internal Validation)
+
+### Comparison Table
+| Metric | v0.4.0 (BIO-Phoneme) | v0.3.0 (Neural) | BPE (Standard) |
+| :--- | :--- | :--- | :--- |
+| **Morph. Accuracy** | **91.67%** | 88.24% | 15.34% |
+| **Split Logic** | **BIO-Tagging** | Binary Sigmoid | Statistical |
+| **Sandhi Recovery** | **Canonical (ം ← ത്ത്)** | Surface Only | None |
+| **OOV Recovery** | **21.8%** | 21.8% | 0% |
+| **Throughput** | **~780 w/s** | ~850 w/s | 150k w/s |
+
+### Analysis
+- **Linguistic Precision:** The 10-dimensional phonetic vector allows the model to treat 'Virama' and 'Anusvara' as structural signals rather than just another character ID.
+- **Canonicalization:** The reconstruction layer ensures that nouns ending in 'ം' are merged regardless of their case-marker surface form, significantly improving downstream semantic clustering.
+- **Speed Note:** The slight drop in throughput (~780 w/s) is due to the 10-dim feature extraction overhead, but the 3.4% accuracy gain justifies the cost.
+
 
