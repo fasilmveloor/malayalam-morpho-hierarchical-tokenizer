@@ -486,4 +486,3 @@ def get_proper_root_suffix(word: str, analyzer_root: str) -> Tuple[str, str]:
     
     # Fallback
     return (stem, word[len(stem_base):] if word.startswith(stem_base) else '')
-    

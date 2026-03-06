@@ -3,12 +3,20 @@ Hierarchical Vocabulary Manager for Malayalam Tokenizer
 
 This module manages a hierarchical vocabulary structure where tokens are organized
 by morphological type:
-- Level 1 (1000-1999): Root words / Stems
+- Level 1 (1000-1999): Root words / Stems (Semantic Core)
 - Level 2 (2000-2999): Tense/Aspect markers
 - Level 3 (3000-3999): Case markers and postpositions
 - Level 4 (4000-4999): Common function words (pronouns, particles)
-- Level 5 (5000-5999): Conjunct consonants and special characters
-- Level 6 (6000+): Subword fallback tokens
+- Level 5 (5000-5999): Infixes / Connective particles / Augments
+- Level 6 (6000-6999): Subword fallback tokens
+- Level 7 (7000+): Character-level tokens
+
+Slot System:
+- Slot 0: Roots (Base)
+- Slot 1: Augments/Infixes (Middle)
+- Slot 2: Tense/Suffix (End)
+
+This prevents the model from hallucinating incorrect morpheme positions.
 """
 
 import json
@@ -20,15 +28,23 @@ import re
 class HierarchicalVocabulary:
     """Manages hierarchical vocabulary for Malayalam morphological tokenizer."""
     
-    # Token type prefixes
+    # Token type prefixes with Slot information
     TOKEN_RANGES = {
-        'root': (1000, 1999),
-        'tense': (2000, 2999),
-        'case': (3000, 3999),
-        'function': (4000, 4999),
-        'conjunct': (5000, 5999),
-        'subword': (6000, 6999),
-        'special': (0, 99),  # Special tokens like <PAD>, <UNK>, etc.
+        'root': (1000, 1999, 0),      # Slot 0: Base
+        'tense': (2000, 2999, 2),     # Slot 2: End
+        'case': (3000, 3999, 2),      # Slot 2: End
+        'function': (4000, 4999, 0),  # Slot 0: Can appear at start
+        'infix': (5000, 5999, 1),     # Slot 1: Middle (NEW!)
+        'conjunct': (5000, 5999, 1),  # Slot 1: Middle
+        'subword': (6000, 6999, -1),  # No specific slot
+        'special': (0, 99, -1),       # Special tokens
+    }
+    
+    # Slot definitions for position validation
+    SLOTS = {
+        0: 'base',      # Roots, function words
+        1: 'middle',    # Infixes, augments
+        2: 'suffix',    # Tense, case markers
     }
     
     SPECIAL_TOKENS = {
@@ -38,13 +54,15 @@ class HierarchicalVocabulary:
         '<EOS>': 3,  # End of sequence
         '<ROOT>': 4,  # Marks start of root
         '<SUFFIX>': 5,  # Marks start of suffix sequence
-        '<SPACE>': 6,
+        '<INFIX>': 6,  # Marks infix/augment
+        '<SPACE>': 7,
     }
     
     def __init__(self):
         self.token_to_id: Dict[str, int] = {}
         self.id_to_token: Dict[int, str] = {}
         self.token_type: Dict[int, str] = {}  # Maps token ID to its type
+        self.token_slot: Dict[int, int] = {}  # Maps token ID to its slot position
         
         # Track next available ID for each type
         self.next_id = {
@@ -52,6 +70,7 @@ class HierarchicalVocabulary:
             'tense': 2000,
             'case': 3000,
             'function': 4000,
+            'infix': 5000,
             'conjunct': 5000,
             'subword': 6000,
             'special': 100,
@@ -62,9 +81,19 @@ class HierarchicalVocabulary:
             self.token_to_id[token] = token_id
             self.id_to_token[token_id] = token
             self.token_type[token_id] = 'special'
+            self.token_slot[token_id] = -1
     
     def classify_morpheme(self, morpheme: str) -> str:
         """Classify a morpheme into its type based on linguistic rules."""
+        
+        # Infixes/Augments - These are grammatical bridges between roots and suffixes
+        # Examples: ക്ക (kka) in പഠിക്കുന്നു, അ (a) vowel insertion
+        infix_markers = [
+            'ക്ക', 'ച്ച', 'ത്ത', 'പ്പ', 'ട്ട',  # Consonant doublings (transitivizers)
+            'അ', 'ാ', 'ു', 'ൂ',  # Vowel insertions for sandhi
+            'യ്', 'വ്',  # Glide insertions
+            'ത്ത്', 'ട്ട്',  # Noun inflection markers
+        ]
         
         # Common Malayalam tense/aspect suffixes
         tense_markers = [
@@ -97,6 +126,10 @@ class HierarchicalVocabulary:
             'ഇല്ല', 'വേണ്ട', 'പോലെ', 'പോലുള്ള',  # Negatives/similes
         ]
         
+        # Check infixes first (they are typically short)
+        if morpheme in infix_markers:
+            return 'infix'
+        
         # Check each category
         for marker in tense_markers:
             if morpheme.endswith(marker) or morpheme == marker:
@@ -109,9 +142,9 @@ class HierarchicalVocabulary:
         if morpheme in function_words:
             return 'function'
         
-        # Check if it's a conjunct consonant pattern
+        # Check if it's a conjunct consonant pattern (single conjunct)
         if re.match(r'^[ക-ഹ][്][ക-ഹ]$', morpheme):
-            return 'conjunct'
+            return 'infix'  # Changed from conjunct to infix
         
         # Default to root
         return 'root'
@@ -125,10 +158,13 @@ class HierarchicalVocabulary:
             token_type = self.classify_morpheme(token)
         
         # Check if we have room in this token range
-        start, end = self.TOKEN_RANGES.get(token_type, (6000, 6999))
+        range_info = self.TOKEN_RANGES.get(token_type, (6000, 6999, -1))
+        start, end, slot = range_info[0], range_info[1], range_info[2] if len(range_info) > 2 else -1
+        
         if self.next_id[token_type] > end:
             # Overflow to subword range
             token_type = 'subword'
+            slot = -1
         
         token_id = self.next_id[token_type]
         self.next_id[token_type] += 1
@@ -136,6 +172,7 @@ class HierarchicalVocabulary:
         self.token_to_id[token] = token_id
         self.id_to_token[token_id] = token
         self.token_type[token_id] = token_type
+        self.token_slot[token_id] = slot
         
         return token_id
     
@@ -203,3 +240,4 @@ class HierarchicalVocabulary:
         for token_type in self.TOKEN_RANGES.keys():
             type_counts[token_type] = len(self.get_tokens_by_type(token_type))
         return f"HierarchicalVocabulary(total={len(self)}, types={type_counts})"
+        
