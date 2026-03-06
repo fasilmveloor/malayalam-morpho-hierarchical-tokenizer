@@ -200,7 +200,8 @@ class BaselineComparison:
         print("\n[4/4] Testing Character-level Tokenizer...")
         def char_tokenize(word):
             import re
-            return re.findall(r'[\u0D00-\u0D7F][\u0D00-\u0D7F]*|.', word)
+            # return re.findall(r'[\u0D00-\u0D7F][\u0D00-\u0D7F]*|.', word)
+            return list(word)
         
         results['character'] = self.evaluate_tokenizer(
             'Character', char_tokenize, corpus
