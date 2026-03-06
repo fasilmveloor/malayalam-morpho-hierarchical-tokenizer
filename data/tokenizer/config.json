@@ -1,0 +1,11 @@
+{
+  "vocab_size": 5000,
+  "use_mlmorph": true,
+  "stats": {
+    "total_tokens": 43041,
+    "morphology_hits": 49214,
+    "oov_hits": 8091,
+    "char_fallback_hits": 7779,
+    "cache_hits": 516
+  }
+}
