@@ -37,8 +37,20 @@ Author: Malayalam NLP Research
 
 import unicodedata
 import re
+import logging
 from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+if not logger.handlers:
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
 # Import local modules
 import sys
@@ -175,9 +187,15 @@ class MorphoHierarchicalTokenizer:
         Returns:
             List of morphemes (root + suffixes)
         """
+        # Handle empty input
+        if not word:
+            logger.warning("Empty word passed to get_morphemes")
+            return ['<UNK>']
+        
         # First, check high-frequency cache for speed
         if word in self.high_freq_cache:
             self.stats['cache_hits'] += 1
+            logger.debug(f"Cache hit for '{word}'")
             return self.high_freq_cache[word]
         
         if self.morph_analyzer is None:
@@ -200,9 +218,10 @@ class MorphoHierarchicalTokenizer:
                 
                 if morphemes:
                     self.stats['morphology_hits'] += 1
+                    logger.debug(f"mlmorph analysis: '{word}' → {morphemes}")
                     return morphemes
         except Exception as e:
-            pass  # Fall through to fallback
+            logger.debug(f"mlmorph failed for '{word}': {e}")
         
         return self._fallback_morpheme_split(word)
     
@@ -452,26 +471,41 @@ class MorphoHierarchicalTokenizer:
         Returns:
             List of token IDs
         """
-        # Normalize text
-        text = self.normalize_text(text)
+        # Handle None or empty input
+        if not text:
+            logger.debug("Empty or None input, returning BOS+EOS")
+            return [self.vocab.SPECIAL_TOKENS['<BOS>'], self.vocab.SPECIAL_TOKENS['<EOS>']]
         
-        # Split into words
-        words = re.findall(r'[\u0D00-\u0D7F]+', text)
-        
-        token_ids = []
-        
-        # Add BOS token
-        token_ids.append(self.vocab.SPECIAL_TOKENS['<BOS>'])
-        
-        for word in words:
-            tokens = self.tokenize_word(word)
-            for token in tokens:
-                token_ids.append(token.token_id)
-        
-        # Add EOS token
-        token_ids.append(self.vocab.SPECIAL_TOKENS['<EOS>'])
-        
-        return token_ids
+        try:
+            # Normalize text
+            text = self.normalize_text(text)
+            
+            # Split into words
+            words = re.findall(r'[\u0D00-\u0D7F]+', text)
+            
+            if not words:
+                logger.debug("No Malayalam words found in input")
+                return [self.vocab.SPECIAL_TOKENS['<BOS>'], self.vocab.SPECIAL_TOKENS['<EOS>']]
+            
+            token_ids = []
+            
+            # Add BOS token
+            token_ids.append(self.vocab.SPECIAL_TOKENS['<BOS>'])
+            
+            for word in words:
+                tokens = self.tokenize_word(word)
+                for token in tokens:
+                    token_ids.append(token.token_id)
+            
+            # Add EOS token
+            token_ids.append(self.vocab.SPECIAL_TOKENS['<EOS>'])
+            
+            logger.debug(f"Tokenized {len(words)} words into {len(token_ids)} tokens")
+            return token_ids
+            
+        except Exception as e:
+            logger.error(f"Error tokenizing text: {e}")
+            return [self.vocab.SPECIAL_TOKENS['<BOS>'], self.vocab.SPECIAL_TOKENS['<EOS>']]
     
     def tokenize_detailed(self, text: str) -> List[TokenInfo]:
         """

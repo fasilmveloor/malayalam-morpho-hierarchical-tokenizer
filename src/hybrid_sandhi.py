@@ -16,8 +16,20 @@ Usage:
 
 import os
 import sys
+import logging
 from typing import List, Tuple, Optional
 from pathlib import Path
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+if not logger.handlers:
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
