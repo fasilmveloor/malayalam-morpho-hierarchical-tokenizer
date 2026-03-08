@@ -46,8 +46,8 @@ This project introduces a **Morpho-Hierarchical Tokenizer** that:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/malayalam-tokenizer.git
-cd malayalam-tokenizer
+git clone https://github.com/   fasilveloor/ml-morpho-hierarchical-tokenizer.git
+cd ml-morpho-hierarchical-tokenizer
 
 # Install dependencies
 pip install -r requirements.txt
@@ -250,10 +250,10 @@ malayalam-tokenizer/
 @misc{malayalam-morpho-tokenizer,
   title={A Hybrid Morpho-Hierarchical Tokenizer for Agglutinative Languages: 
          Combining Finite State Transducers with Phoneme-Aware Bi-LSTM for Malayalam},
-  author={Your Name},
-  year={2024},
+  author={Mohammed Fasil Veloor},
+  year={2026},
   publisher={GitHub},
-  url={https://github.com/yourusername/malayalam-tokenizer}
+  url={https://github.com/fasilmveloor/ml-morpho-hierarchical-tokenizer}
 }
 ```
 
@@ -297,8 +297,8 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ```bash
 # Clone and install dev dependencies
-git clone https://github.com/yourusername/malayalam-tokenizer.git
-cd malayalam-tokenizer
+git clone https://github.com/fasilveloor/ml-morpho-hierarchical-tokenizer.git
+cd ml-morpho-hierarchical-tokenizer
 pip install -e ".[dev]"
 
 # Run linting
@@ -338,8 +338,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-- **GitHub Issues**: [Report a bug](https://github.com/yourusername/malayalam-tokenizer/issues)
-- **Discussions**: [Join the discussion](https://github.com/yourusername/malayalam-tokenizer/discussions)
+- **GitHub Issues**: [Report a bug](https://github.com/fasilveloor/ml-morpho-hierarchical-tokenizer/issues)
+- **Discussions**: [Join the discussion](https://github.com/fasilveloor/ml-morpho-hierarchical-tokenizer/discussions)
 
 ---
 

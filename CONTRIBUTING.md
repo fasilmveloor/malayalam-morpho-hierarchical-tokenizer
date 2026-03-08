@@ -37,11 +37,11 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 ```bash
 # Fork the repository on GitHub
 # Then clone your fork
-git clone https://github.com/YOUR_USERNAME/malayalam-tokenizer.git
-cd malayalam-tokenizer
+git clone https://github.com/fasilmveloor/ml-morpho-hierarchical-tokenizer.git
+cd ml-morpho-hierarchical-tokenizer
 
 # Add upstream remote
-git remote add upstream https://github.com/original/malayalam-tokenizer.git
+git remote add upstream https://github.com/fasilmveloor/ml-morpho-hierarchical-tokenizer.git
 ```
 
 ---

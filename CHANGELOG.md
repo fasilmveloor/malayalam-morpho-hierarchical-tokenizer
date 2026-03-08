@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2024-03-06
+## [1.0.0] - 2026-03-06
 
 ### Added
 - Initial release of Malayalam Morpho-Hierarchical Tokenizer
@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TESTING_CHECKLIST.md
 - CONTRIBUTING.md
 
-## [0.5.0] - 2024-02-15
+## [0.5.0] - 2026-02-15
 
 ### Added
 - Neural sandhi splitter with Bi-LSTM architecture
@@ -54,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved sandhi transformation accuracy
 - Optimized mlmorph integration
 
-## [0.4.0] - 2024-02-01
+## [0.4.0] - 2026-02-01
 
 ### Added
 - Slot-based vocabulary system
@@ -65,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unicode normalization issues
 - Virama handling in sandhi combination
 
-## [0.3.0] - 2024-01-15
+## [0.3.0] - 2026-01-15
 
 ### Added
 - mlmorph FST integration
@@ -75,14 +75,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Refactored tokenizer architecture
 
-## [0.2.0] - 2024-01-01
+## [0.2.0] - 2026-01-01
 
 ### Added
 - Basic tokenizer implementation
 - Vocabulary management
 - Simple suffix stripping
 
-## [0.1.0] - 2023-12-15
+## [0.1.0] - 2025-12-15
 
 ### Added
 - Project initialization
@@ -95,12 +95,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Description |
 |---------|------|-------------|
-| 1.0.0 | 2024-03-06 | Initial public release |
-| 0.5.0 | 2024-02-15 | Neural models added |
-| 0.4.0 | 2024-02-01 | Slot system implemented |
-| 0.3.0 | 2024-01-15 | mlmorph integration |
-| 0.2.0 | 2024-01-01 | Basic tokenizer |
-| 0.1.0 | 2023-12-15 | Project start |
+| 1.0.0 | 2026-03-06 | Initial public release |
+| 0.5.0 | 2026-02-15 | Neural models added |
+| 0.4.0 | 2026-02-01 | Slot system implemented |
+| 0.3.0 | 2026-01-15 | mlmorph integration |
+| 0.2.0 | 2026-01-01 | Basic tokenizer |
+| 0.1.0 | 2025-12-15 | Project start |
 
 ---
 

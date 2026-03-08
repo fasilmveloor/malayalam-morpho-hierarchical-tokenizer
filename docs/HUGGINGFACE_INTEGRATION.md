@@ -263,7 +263,7 @@ malayalam-tokenizer/
 huggingface-cli login
 
 # Create repository
-huggingface-cli repo create malayalam-morpho-tokenizer --organization your-org
+huggingface-cli repo create malayalam-morpho-tokenizer --organization fasilmveloor
 
 # Upload files
 huggingface-cli upload malayalam-morpho-tokenizer ./models/
@@ -275,7 +275,7 @@ huggingface-cli upload malayalam-morpho-tokenizer ./models/
 from transformers import AutoTokenizer
 
 # Load tokenizer
-tokenizer = AutoTokenizer.from_pretrained("your-org/malayalam-morpho-tokenizer")
+tokenizer = AutoTokenizer.from_pretrained("fasilmveloor/ml-morpho-hierarchical-tokenizer")
 
 # Tokenize
 text = "പഠിക്കുന്നു വിദ്യാലയത്തിൽ"

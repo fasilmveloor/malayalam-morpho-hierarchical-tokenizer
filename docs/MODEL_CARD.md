@@ -79,7 +79,7 @@ pip install transformers torch mlmorph
 from transformers import AutoTokenizer
 
 # Load tokenizer
-tokenizer = AutoTokenizer.from_pretrained("yourusername/malayalam-morpho-tokenizer")
+tokenizer = AutoTokenizer.from_pretrained("fasilmveloor/ml-morpho-hierarchical-tokenizer")
 
 # Tokenize
 text = "പഠിക്കുന്നു വിദ്യാലയത്തിൽ"
@@ -118,7 +118,7 @@ for token_id in ids:
 from transformers import pipeline
 
 # Use with any Malayalam model
-nlp = pipeline("fill-mask", model="yourusername/malayalam-bert")
+nlp = pipeline("fill-mask", model="fasilmveloor/ml-morpho-hierarchical-tokenizer")
 result = nlp("മലയാളത്തിൽ എഴുതുന്നു [MASK]")
 ```
 
@@ -232,10 +232,10 @@ numpy>=1.21
 @misc{malayalam-morpho-tokenizer,
   title={A Hybrid Morpho-Hierarchical Tokenizer for Agglutinative Languages: 
          Combining Finite State Transducers with Phoneme-Aware Bi-LSTM for Malayalam},
-  author={Your Name},
-  year={2024},
+  author={Mohammed Fasil Veloor},
+  year={2026},
   publisher={HuggingFace},
-  url={https://huggingface.co/yourusername/malayalam-morpho-tokenizer}
+  url={https://huggingface.co/fasilmveloor/ml-morpho-hierarchical-tokenizer}
 }
 ```
 
@@ -251,5 +251,5 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-- **GitHub**: https://github.com/yourusername/malayalam-tokenizer
-- **Issues**: https://github.com/yourusername/malayalam-tokenizer/issues
+- **GitHub**: https://github.com/fasilmveloor/ml-morpho-hierarchical-tokenizer
+- **Issues**: https://github.com/fasilmveloor/ml-morpho-hierarchical-tokenizer/issues
