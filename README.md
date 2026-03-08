@@ -46,7 +46,7 @@ This project introduces a **Morpho-Hierarchical Tokenizer** that:
 
 ```bash
 # Clone repository
-git clone https://github.com/   fasilveloor/ml-morpho-hierarchical-tokenizer.git
+git clone https://github.com/fasilveloor/ml-morpho-hierarchical-tokenizer.git
 cd ml-morpho-hierarchical-tokenizer
 
 # Install dependencies
