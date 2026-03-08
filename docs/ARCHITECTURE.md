@@ -75,14 +75,14 @@ The Morpho-Hierarchical Tokenizer is built on three core principles:
 │  │  Token          │  Category  │  Slot    │  Token ID     │    │
 │  │  ─────────────────────────────────────────────────────  │    │
 │  │  പഠിക്ക്        │  root      │  1xxx    │  1001         │    │
-│  │  ുന്നു          │  tense     │  2xxx    │  2001         │    │
+│  │  ുന്നു          │  tense     │  30xxx   │  30001        │    │
 │  └─────────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      OUTPUT                                     │
-│              [2, 1001, 2001, 3]                                 │
+│              [2, 1001, 30001, 3]                                │
 │           (BOS, root, tense, EOS)                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -134,23 +134,27 @@ class HierarchicalVocabulary:
     Slot-based vocabulary with hierarchical ID assignment.
     
     Slots:
-        special:  0-999
-        root:     1000-1999
-        tense:    2000-2999
-        case:     3000-3999
-        function: 4000-4999
-        infix:    5000-5999
-        char:     7000-7999
+        special:  0-999        (1,000 slots)
+        root:     1000-29999   (29,000 slots)
+        tense:    30000-35999  (6,000 slots)
+        case:     36000-41999  (6,000 slots)
+        function: 42000-44999  (3,000 slots)
+        infix:    45000-47999  (3,000 slots)
+        conjunct: 48000-49999  (2,000 slots)
+        subword:  50000-59999  (10,000 slots)
+        reserved: 60000+       (future expansion)
     """
     
-    SLOTS = {
-        'special': (0, 999),
-        'root': (1000, 1999),
-        'tense': (2000, 2999),
-        'case': (3000, 3999),
-        'function': (4000, 4999),
-        'infix': (5000, 5999),
-        'char': (7000, 7999),
+    TOKEN_RANGES = {
+        'special': (0, 999, -1),        # Special tokens
+        'root': (1000, 29999, 0),       # Slot 0: Base - 29,000 slots
+        'tense': (30000, 35999, 2),     # Slot 2: End - 6,000 slots
+        'case': (36000, 41999, 2),      # Slot 2: End - 6,000 slots
+        'function': (42000, 44999, 0),  # Slot 0: Can start - 3,000 slots
+        'infix': (45000, 47999, 1),     # Slot 1: Middle - 3,000 slots
+        'conjunct': (48000, 49999, 1),  # Slot 1: Middle - 2,000 slots
+        'subword': (50000, 59999, -1),  # No specific slot - 10,000 slots
+        'reserved': (60000, 65535, -1), # Reserved for future use
     }
 ```
 
@@ -229,21 +233,21 @@ Input: "പഠിക്കുന്നു"
     │
     ├── Token assignment:
     │   ├── പഠിക്ക് → root → ID: 1001
-    │   └── ുന്നു → tense → ID: 2001
+    │   └── ുന്നു → tense → ID: 30001
     │
-    └── Output: [2, 1001, 2001, 3]
+    └── Output: [2, 1001, 30001, 3]
               (BOS, root, tense, EOS)
 ```
 
 ### 3.2 Decoding Flow
 
 ```
-Input: [2, 1001, 2001, 3]
+Input: [2, 1001, 30001, 3]
     │
     ├── ID → Token:
     │   ├── 2 → <BOS> (skip)
     │   ├── 1001 → പഠിക്ക്
-    │   ├── 2001 → ുന്നു
+    │   ├── 30001 → ുന്നു
     │   └── 3 → <EOS> (skip)
     │
     ├── Sandhi reconstruction:
@@ -383,38 +387,49 @@ Optimal Tag Sequence
 │            │ 1: <UNK>                             │         │
 │            │ 2: <BOS>                             │         │
 │            │ 3: <EOS>                             │         │
-│            │ 4: <MASK>                            │         │
-│            │ 5: <CLS>                             │         │
-│            │ 6: <SEP>                             │         │
+│            │ 4: <ROOT>                            │         │
+│            │ 5: <SUFFIX>                          │         │
+│            │ 6: <INFIX>                           │         │
+│            │ 7: <SPACE>                           │         │
+│            │ 8: <SEP>                             │         │
+│            │ 9: <MASK>                            │         │
 │            └──────────────────────────────────────┘         │
 │                                                             │
-│  1000-1999 ROOT TOKENS                                      │
+│  1000-29999   ROOT TOKENS (29,000 slots)                    │
 │            ┌──────────────────────────────────────┐         │
 │            │ 1000: പഠിക്ക് (study)               │         │
 │            │ 1001: വിദ്യാലയം (school)            │         │
 │            │ 1002: കേരളം (Kerala)                │         │
 │            │ ...                                  │         │
+│            │                                      │         │
+│            │ Includes:                            │         │
+│            │ • Native Dravidian roots (~15-20K)   │         │
+│            │ • Sanskrit tatsama (~5-8K)           │         │
+│            │ • Modern loanwords (~3-5K)           │         │
+│            │ • Proper nouns (~2-3K)               │         │
 │            └──────────────────────────────────────┘         │
 │                                                             │
-│  2000-2999 TENSE MARKERS                                    │
+│  30000-35999  TENSE MARKERS (6,000 slots)                   │
 │            ┌──────────────────────────────────────┐         │
-│            │ 2000: ുന്നു (present)               │         │
-│            │ 2001: ച്ചു (past)                   │         │
-│            │ 2002: ും (future)                   │         │
+│            │ 30000: ുന്നു (present)              │         │
+│            │ 30001: ച്ചു (past)                  │         │
+│            │ 30002: ും (future)                  │         │
 │            │ ...                                  │         │
 │            └──────────────────────────────────────┘         │
 │                                                             │
-│  3000-3999 CASE MARKERS                                     │
+│  36000-41999  CASE MARKERS (6,000 slots)                    │
 │            ┌──────────────────────────────────────┐         │
-│            │ 3000: ിൽ (locative)                 │         │
-│            │ 3001: ിന്റെ (genitive)              │         │
-│            │ 3002: ക്ക് (dative)                 │         │
+│            │ 36000: ിൽ (locative)                │         │
+│            │ 36001: ിന്റെ (genitive)             │         │
+│            │ 36002: ക്ക് (dative)                │         │
 │            │ ...                                  │         │
 │            └──────────────────────────────────────┘         │
 │                                                             │
-│  4000-4999 FUNCTION WORDS                                   │
-│  5000-5999 INFIX/SANDHI                                     │
-│  7000-7999 CHARACTER FALLBACK                               │
+│  42000-44999  FUNCTION WORDS (3,000 slots)                  │
+│  45000-47999  INFIX/SANDHI (3,000 slots)                    │
+│  48000-49999  CONJUNCT (2,000 slots)                        │
+│  50000-59999  SUBWORD (10,000 slots)                        │
+│  60000+       RESERVED (future expansion)                   │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -426,18 +441,20 @@ def classify_token(token_id: int) -> str:
     """Classify token by its ID range."""
     if 0 <= token_id < 1000:
         return 'special'
-    elif 1000 <= token_id < 2000:
+    elif 1000 <= token_id < 30000:
         return 'root'
-    elif 2000 <= token_id < 3000:
+    elif 30000 <= token_id < 36000:
         return 'tense'
-    elif 3000 <= token_id < 4000:
+    elif 36000 <= token_id < 42000:
         return 'case'
-    elif 4000 <= token_id < 5000:
+    elif 42000 <= token_id < 45000:
         return 'function'
-    elif 5000 <= token_id < 6000:
+    elif 45000 <= token_id < 48000:
         return 'infix'
-    elif 7000 <= token_id < 8000:
-        return 'char'
+    elif 48000 <= token_id < 50000:
+        return 'conjunct'
+    elif 50000 <= token_id < 60000:
+        return 'subword'
     else:
         return 'unknown'
 ```
@@ -606,13 +623,13 @@ class MalayalamSandhi:
 # In src/vocabulary.py
 
 class HierarchicalVocabulary:
-    SLOTS = {
+    TOKEN_RANGES = {
         # Existing slots...
-        'root': (1000, 1999),
+        'root': (1000, 29999, 0),
         # ...
         
-        # Add new slot
-        'proper_noun': (6000, 6999),
+        # Add new slot in reserved range
+        'technical': (60000, 64999, 0),
     }
 ```
 
@@ -652,11 +669,12 @@ The architecture can be adapted for other morphologically rich languages:
     "<PAD>": 0,
     "<UNK>": 1,
     "പഠിക്ക്": 1000,
-    "ുന്നു": 2000
+    "ുന്നു": 30000
   },
   "slots": {
     "special": [0, 999],
-    "root": [1000, 1999]
+    "root": [1000, 29999],
+    "tense": [30000, 35999]
   }
 }
 ```
@@ -711,4 +729,4 @@ def tokenize_batch(texts: List[str]) -> List[List[int]]:
 
 ---
 
-*Last updated: 2024*
+*Last updated: March 2026*

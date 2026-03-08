@@ -32,7 +32,7 @@ This is a novel morphologically-aware tokenizer for Malayalam, a Dravidian langu
 
 ### Key Features
 
-- **Slot System**: Token IDs encode grammatical categories (Root=1xxx, Tense=2xxx, Case=3xxx)
+- **Slot System**: Token IDs encode grammatical categories (Root=1000-29999, Tense=30000-35999, Case=36000-41999)
 - **Phoneme Features**: 10-dimensional vector encoding Virama, Vowel, Consonant categories
 - **BIO Tagging**: 91.67% accuracy on morpheme boundary detection
 - **Sandhi Rules**: Handles ം → ത്ത് transformation and vowel sandhi
@@ -88,7 +88,7 @@ tokens = tokenizer.tokenize(text)
 
 # Encode
 ids = tokenizer.encode(text)
-# Output: [2, 1001, 2001, 1002, 3001, 3]
+# Output: [2, 1001, 30001, 1002, 36001, 3]
 
 # Decode
 decoded = tokenizer.decode(ids)
@@ -106,9 +106,9 @@ for token_id in ids:
 # Output:
 # 2: special (BOS)
 # 1001: root
-# 2001: tense
+# 30001: tense
 # 1002: root
-# 3001: case
+# 36001: case
 # 3: special (EOS)
 ```
 
@@ -119,20 +119,33 @@ from transformers import pipeline
 
 # Use with any Malayalam model
 nlp = pipeline("fill-mask", model="fasilmveloor/ml-morpho-hierarchical-tokenizer")
-result = nlp("മലയാളത്തിൽ എഴുതുന്നു [MASK]")
+result = nlp("മലയാളത്തിൽ എഴുതുന്നു  ")
 ```
 
 ## Token ID Structure
 
-| Slot | Category | ID Range | Description |
-|------|----------|----------|-------------|
-| 0 | Special | 0-999 | `<PAD>`, `<UNK>`, `<BOS>`, `<EOS>`, `<MASK>`, `<CLS>`, `<SEP>` |
-| 1 | Root | 1000-1999 | Verb/Noun stems |
-| 2 | Tense | 2000-2999 | Present (ുന്നു), Past (ച്ചു), Future (ും) |
-| 3 | Case | 3000-3999 | Locative (ിൽ), Genitive (ിന്റെ), Dative (ക്ക്) |
-| 4 | Function | 4000-4999 | Conjunctions, particles |
-| 5 | Infix | 5000-5999 | Sandhi infixes (ത്ത്) |
-| 6 | Char | 7000-7999 | Character-level fallback |
+| Slot | Category | ID Range | Slots | Description |
+|------|----------|----------|-------|-------------|
+| 0 | Special | 0-999 | 1,000 | `<PAD>`, `<UNK>`, `<BOS>`, `<EOS>`, `<MASK>`, `<ROOT>`, `<SUFFIX>`, `<INFIX>`, `<SPACE>`, `<SEP>` |
+| 1 | Root | 1000-29999 | 29,000 | Verb/Noun stems (native + tatsama + loanwords) |
+| 2 | Tense | 30000-35999 | 6,000 | Present (ുന്നു), Past (ച്ചു), Future (ും) |
+| 3 | Case | 36000-41999 | 6,000 | Locative (ിൽ), Genitive (ിന്റെ), Dative (ക്ക്) |
+| 4 | Function | 42000-44999 | 3,000 | Pronouns, conjunctions, particles |
+| 5 | Infix | 45000-47999 | 3,000 | Sandhi infixes (ത്ത്), augments |
+| 6 | Conjunct | 48000-49999 | 2,000 | Conjunct consonants |
+| 7 | Subword | 50000-59999 | 10,000 | Character-level fallback |
+| 8 | Reserved | 60000+ | — | Future expansion |
+
+## Root Slot Allocation (29,000 slots)
+
+The root category includes all base morphemes that can appear at the start of a morphological sequence:
+
+| Category | Approximate Count | Examples |
+|----------|-------------------|----------|
+| Native Dravidian roots | ~15,000-20,000 | പാടുക, എഴുതുക, നടക്കുക |
+| Sanskrit tatsama | ~5,000-8,000 | പ്രകാരം, സമയം, വിദ്യ |
+| Modern loanwords | ~3,000-5,000 | സ്കൂൾ (school), കമ്പ്യൂട്ടർ (computer) |
+| Proper nouns & technical | ~2,000-3,000 | Names, places, terminology |
 
 ## Training Details
 
@@ -140,7 +153,7 @@ result = nlp("മലയാളത്തിൽ എഴുതുന്നു [MASK]"
 
 - **SMC Corpus**: News articles, Wikipedia, literature
 - **Training Examples**: 500+ manually annotated morpheme splits
-- **Vocabulary**: 8,000 tokens maximum
+- **Vocabulary**: Production-scale with 29,000+ root slots
 
 ### Training Procedure
 
@@ -251,5 +264,5 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-- **GitHub**: https://github.com/fasilmveloor/ml-morpho-hierarchical-tokenizer
-- **Issues**: https://github.com/fasilmveloor/ml-morpho-hierarchical-tokenizer/issues
+- **GitHub**: https://github.com/fasilmveloor/malayalam-morpho-hierarchical-tokenizer
+- **Issues**: https://github.com/fasilmveloor/malayalam-morpho-hierarchical-tokenizer/issues

@@ -57,14 +57,17 @@ class MorphoHierarchicalTokenizerFast(PreTrainedTokenizer):
             except ImportError:
                 self.morph_analyzer = None
         
-        # Slots for hierarchical vocabulary
-        self.SLOTS = {
-            'special': (0, 999),
-            'root': (1000, 1999),
-            'tense': (2000, 2999),
-            'case': (3000, 3999),
-            'function': (4000, 4999),
-            'infix': (5000, 5999),
+        # Slots for hierarchical vocabulary (updated for production scale)
+        self.TOKEN_RANGES = {
+            'special': (0, 999, -1),        # Special tokens
+            'root': (1000, 29999, 0),       # Slot 0: Base - 29,000 slots
+            'tense': (30000, 35999, 2),     # Slot 2: End - 6,000 slots
+            'case': (36000, 41999, 2),      # Slot 2: End - 6,000 slots
+            'function': (42000, 44999, 0),  # Slot 0: Can start - 3,000 slots
+            'infix': (45000, 47999, 1),     # Slot 1: Middle - 3,000 slots
+            'conjunct': (48000, 49999, 1),  # Slot 1: Middle - 2,000 slots
+            'subword': (50000, 59999, -1),  # No specific slot - 10,000 slots
+            'reserved': (60000, 65535, -1), # Reserved for future use
         }
     
     def _tokenize(self, text: str) -> List[str]:
@@ -146,8 +149,8 @@ class MorphoHierarchicalTokenizerFast(PreTrainedTokenizer):
     
     def classify_token(self, token_id: int) -> str:
         """Classify token by hierarchical slot."""
-        for category, (start, end) in self.SLOTS.items():
-            if start <= token_id < end:
+        for category, (start, end, slot) in self.TOKEN_RANGES.items():
+            if start <= token_id <= end:
                 return category
         return 'unknown'
     
@@ -161,7 +164,7 @@ class MorphoHierarchicalTokenizerFast(PreTrainedTokenizer):
         with open(vocab_path, 'w', encoding='utf-8') as f:
             json.dump({
                 'token_to_id': self.vocab,
-                'slots': self.SLOTS
+                'token_ranges': {k: list(v) for k, v in self.TOKEN_RANGES.items()}
             }, f, ensure_ascii=False, indent=2)
         return (vocab_path,)
 ```
@@ -284,7 +287,7 @@ tokens = tokenizer.tokenize(text)
 
 # Get token IDs
 ids = tokenizer.encode(text)
-# Output: [2, 1001, 2001, 1002, 3001, 3]
+# Output: [2, 1001, 30001, 1002, 36001, 3]
 
 # Classify tokens
 for token_id in ids:
