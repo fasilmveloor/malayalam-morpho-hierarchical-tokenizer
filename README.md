@@ -32,7 +32,7 @@ This project introduces a **Morpho-Hierarchical Tokenizer** that:
 
 | Feature | Description |
 |---------|-------------|
-| **Slot System** | Hierarchical token IDs encoding grammatical role (Root=1xxx, Tense=2xxx, Case=3xxx) |
+| **Slot System** | Hierarchical token IDs encoding grammatical role (Root=1000-29999, Tense=30000-35999, Case=36000-41999) |
 | **Phoneme Features** | 10-dimensional vector encoding Virama, Vowel, Consonant categories |
 | **BIO Tagging** | 91.67% accuracy on morpheme boundary detection |
 | **Sandhi Reconstruction** | ം → ത്ത് transformation for canonical form restoration |
@@ -46,8 +46,8 @@ This project introduces a **Morpho-Hierarchical Tokenizer** that:
 
 ```bash
 # Clone repository
-git clone https://github.com/fasilveloor/ml-morpho-hierarchical-tokenizer.git
-cd ml-morpho-hierarchical-tokenizer
+git clone https://github.com/fasilmveloor/malayalam-morpho-hierarchical-tokenizer.git
+cd malayalam-morpho-hierarchical-tokenizer
 
 # Install dependencies
 pip install -r requirements.txt
@@ -93,10 +93,10 @@ tokens = tokenizer.tokenize("പഠിക്കുന്നു")
 
 # Encode
 ids = tokenizer.encode("പഠിക്കുന്നു")
-# Output: [2, 1000, 2000, 3]  # BOS, root, tense, EOS
+# Output: [2, 1001, 30001, 3]  # BOS, root, tense, EOS
 
 # Classify tokens
-category = tokenizer.classify_token(2000)
+category = tokenizer.classify_token(30001)
 # Output: 'tense'
 ```
 
@@ -166,15 +166,30 @@ Token IDs
 
 ### Slot System
 
-| Slot | Category | ID Range | Examples |
-|------|----------|----------|----------|
-| 0 | Special | 0-999 | `<PAD>`, `<UNK>`, `<BOS>`, `<EOS>` |
-| 1 | Root | 1000-1999 | പഠിക്ക്, വിദ്യാലയം |
-| 2 | Tense | 2000-2999 | ുന്നു, ച്ചു, ും |
-| 3 | Case | 3000-3999 | ിൽ, ിന്റെ, ക്ക് |
-| 4 | Function | 4000-4999 | എന്ന, എങ്കിൽ |
-| 5 | Infix | 5000-5999 | ത്ത് (sandhi) |
-| 6 | Char | 7000-7999 | Character-level fallback |
+| Slot | Category | ID Range | Slots | Examples |
+|------|----------|----------|-------|----------|
+| 0 | Special | 0-999 | 1,000 | `<PAD>`, `<UNK>`, `<BOS>`, `<EOS>` |
+| 1 | Root | 1000-29999 | 29,000 | പഠിക്ക്, വിദ്യാലയം, സ്കൂൾ |
+| 2 | Tense | 30000-35999 | 6,000 | ുന്നു, ച്ചു, ും |
+| 3 | Case | 36000-41999 | 6,000 | ിൽ, ിന്റെ, ക്ക് |
+| 4 | Function | 42000-44999 | 3,000 | എന്ന, എങ്കിൽ |
+| 5 | Infix | 45000-47999 | 3,000 | ത്ത് (sandhi) |
+| 6 | Conjunct | 48000-49999 | 2,000 | Conjunct consonants |
+| 7 | Subword | 50000-59999 | 10,000 | Character-level fallback |
+| 8 | Reserved | 60000+ | — | Future expansion |
+
+### Root Slot Allocation (29,000 slots)
+
+The root category includes all base morphemes that can appear at the start of a morphological sequence:
+
+| Category | Approximate Count | Examples |
+|----------|-------------------|----------|
+| Native Dravidian roots | ~15,000-20,000 | പാടുക, എഴുതുക, നടക്കുക |
+| Sanskrit tatsama | ~5,000-8,000 | പ്രകാരം, സമയം, വിദ്യ |
+| Modern loanwords | ~3,000-5,000 | സ്കൂൾ (school), കമ്പ്യൂട്ടർ (computer) |
+| Proper nouns & technical | ~2,000-3,000 | Names, places, terminology |
+
+This design reflects the reality of modern Malayalam vocabulary, which is a rich blend of Dravidian, Sanskrit, and global loanwords.
 
 ---
 
@@ -209,11 +224,16 @@ malayalam-tokenizer/
 │   ├── test_tokenizer.py         # Unit tests
 │   └── compare_tokenizers.py     # Benchmark comparison
 │
+├── 📂 docs/
+│   ├── ARCHITECTURE.md           # System architecture
+│   ├── HUGGINGFACE_INTEGRATION.md # HF integration guide
+│   ├── MODEL_CARD.md             # HuggingFace model card
+│   ├── TESTING_CHECKLIST.md      # Testing checklist
+│   └── NEURAL_SANDHI_SUMMARY.md  # Neural model details
+│
 ├── 📄 README.md                  # This file
-├── 📄 ARCHITECTURE.md            # System architecture
-├── 📄 HUGGINGFACE_INTEGRATION.md # HF integration guide
-├── 📄 TESTING_CHECKLIST.md       # Testing checklist
-├── 📄 MODEL_CARD.md              # HuggingFace model card
+├── 📄 DISCLAIMER.md              # Usage disclaimer
+├── 📄 RESEARCHER_NOTEBOOK.md     # Development notes
 ├── 📄 requirements.txt           # Dependencies
 ├── 📄 LICENSE                    # MIT License
 │
@@ -228,10 +248,14 @@ malayalam-tokenizer/
 
 ## 📚 Documentation
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Detailed system architecture
-- **[HUGGINGFACE_INTEGRATION.md](HUGGINGFACE_INTEGRATION.md)** - HuggingFace integration guide
-- **[MODEL_CARD.md](MODEL_CARD.md)** - HuggingFace model card
-- **[TESTING_CHECKLIST.md](TESTING_CHECKLIST.md)** - Comprehensive testing checklist
+| Document | Description |
+|----------|-------------|
+| **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** | Detailed system architecture |
+| **[HUGGINGFACE_INTEGRATION.md](docs/HUGGINGFACE_INTEGRATION.md)** | HuggingFace integration guide |
+| **[MODEL_CARD.md](docs/MODEL_CARD.md)** | HuggingFace model card |
+| **[TESTING_CHECKLIST.md](docs/TESTING_CHECKLIST.md)** | Comprehensive testing checklist |
+| **[RESEARCHER_NOTEBOOK.md](RESEARCHER_NOTEBOOK.md)** | Development timeline and notes |
+| **[DISCLAIMER.md](DISCLAIMER.md)** | Usage disclaimer and limitations |
 
 ---
 
@@ -253,7 +277,7 @@ malayalam-tokenizer/
   author={Mohammed Fasil Veloor},
   year={2026},
   publisher={GitHub},
-  url={https://github.com/fasilmveloor/ml-morpho-hierarchical-tokenizer}
+  url={https://github.com/fasilmveloor/malayalam-morpho-hierarchical-tokenizer}
 }
 ```
 
@@ -297,8 +321,8 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ```bash
 # Clone and install dev dependencies
-git clone https://github.com/fasilveloor/ml-morpho-hierarchical-tokenizer.git
-cd ml-morpho-hierarchical-tokenizer
+git clone https://github.com/fasilmveloor/malayalam-morpho-hierarchical-tokenizer.git
+cd malayalam-morpho-hierarchical-tokenizer
 pip install -e ".[dev]"
 
 # Run linting
@@ -338,8 +362,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Contact
 
-- **GitHub Issues**: [Report a bug](https://github.com/fasilveloor/ml-morpho-hierarchical-tokenizer/issues)
-- **Discussions**: [Join the discussion](https://github.com/fasilveloor/ml-morpho-hierarchical-tokenizer/discussions)
+- **GitHub Issues**: [Report a bug](https://github.com/fasilmveloor/malayalam-morpho-hierarchical-tokenizer/issues)
+- **Discussions**: [Join the discussion](https://github.com/fasilmveloor/malayalam-morpho-hierarchical-tokenizer/discussions)
 
 ---
 
