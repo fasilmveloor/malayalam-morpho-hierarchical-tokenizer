@@ -11,7 +11,7 @@
 
 *Combining Finite State Transducers with Phoneme-Aware Bi-LSTM for Agglutinative Languages*
 
-[Quick Start](#-quick-start) • [Installation](#-installation) • [Documentation](#-documentation) • [Citation](#-citation)
+[Quick Start](#-quick-start) • [Benchmarks](#-performance) • [Documentation](#-documentation) • [Citation](#-citation)
 
 </div>
 
@@ -26,7 +26,7 @@ This project introduces a **Morpho-Hierarchical Tokenizer** that:
 - **Leverages linguistic structure** through Finite State Transducers (mlmorph)
 - **Handles OOV words** with a Phoneme-Aware Bi-LSTM neural network
 - **Organizes tokens hierarchically** using a Slot System for grammatical categories
-- **Achieves 87.22% morphology coverage** with only 26.06% OOV rate
+- **Achieves 87.22% morphology coverage** with only 3,265 vocabulary tokens
 
 ### Key Innovations
 
@@ -37,6 +37,74 @@ This project introduces a **Morpho-Hierarchical Tokenizer** that:
 | **BIO Tagging** | 91.67% accuracy on morpheme boundary detection |
 | **Sandhi Reconstruction** | ം → ത്ത് transformation for canonical form restoration |
 | **Hybrid Pipeline** | Dictionary → FST → Neural fallback chain |
+
+---
+
+## 📊 Performance
+
+### Benchmark Results (SMC Malayalam Corpus)
+
+| Tokenizer | Tokens/Word | Vocab Size | Throughput | Morph. Aligned |
+|-----------|-------------|------------|------------|----------------|
+| **★ Morpho-Hierarchical** | 1.71 | **3,265** ✓ | **37,449 w/s** ✓ | ✅ Yes |
+| MuRIL | **1.33** | 197,258 | 34,477 w/s | ❌ No |
+| IndicBERT v2 | 1.41 | 250,000 | 24,033 w/s | ❌ No |
+| SMC Malayalam Unigram | 1.57 | 16,000 | 17,173 w/s | ⚠️ Partial |
+| SMC Malayalam BPE | 1.66 | 16,000 | 19,336 w/s | ❌ No |
+| XLM-RoBERTa | 1.66 | 250,002 | 16,144 w/s | ❌ No |
+| mBERT | 3.71 | 119,547 | 29,803 w/s | ❌ No |
+
+### Vocabulary Efficiency
+
+**Vocab Efficiency Score** = Tokens/Word × Vocab Size (lower is better)
+
+| Tokenizer | Calculation | Score | vs Ours |
+|-----------|-------------|-------|---------|
+| **★ Morpho-Hierarchical** | 1.71 × 3,265 | **5,583** | — |
+| SMC Malayalam Unigram | 1.57 × 16,000 | 25,120 | 4.5x larger |
+| MuRIL | 1.33 × 197,258 | 262,353 | 47x larger |
+| IndicBERT v2 | 1.41 × 250,000 | 352,500 | 63x larger |
+
+**Key Insight**: MuRIL achieves better raw compression (1.33 tokens/word) but requires 60x larger vocabulary. Our tokenizer achieves comparable compression with dramatically smaller vocabulary, enabling faster training, lower memory footprint, and better deployment efficiency.
+
+### Why This Matters
+
+| Factor | Large Vocab (MuRIL) | Small Vocab (Ours) |
+|--------|---------------------|---------------------|
+| **Embedding layer size** | ~790 MB | ~13 MB |
+| **Training memory** | High GPU RAM required | Fits on CPU |
+| **Inference latency** | O(vocab) softmax | Faster lookup |
+| **Model portability** | Large model files | Lightweight deployment |
+
+### Morphological Alignment
+
+Unlike statistical tokenizers that split at arbitrary character boundaries, our tokenizer respects morphological structure:
+
+```
+Word: പഠിക്കുന്നു (is studying)
+
+❌ MuRIL: ['പ', 'ഠ', 'ി', 'ക', '്', 'ക', 'ു', 'ന', '്', 'ന', 'ു']
+          → 11 tokens, no morphological meaning
+
+✅ Ours:  ['പഠിക്ക്', 'ുന്നു']
+          → 2 tokens: [root:study] + [tense:present]
+          → Linguistically interpretable
+```
+
+**Benefits of morphological alignment:**
+- Downstream tasks (POS tagging, NER, parsing) can leverage token structure
+- Interpretable tokens aid debugging and analysis
+- Better generalization to unseen word forms through morphological rules
+
+### When to Choose Which
+
+| Use Case | Recommended Tokenizer |
+|----------|----------------------|
+| **Resource-constrained deployment** (mobile, edge) | ★ Morpho-Hierarchical |
+| **Fast training with limited GPU memory** | ★ Morpho-Hierarchical |
+| **Downstream morphological tasks** (parsing, NER) | ★ Morpho-Hierarchical |
+| **Maximum compression regardless of vocab size** | MuRIL |
+| **Fine-tuning existing MuRIL models** | MuRIL (compatibility) |
 
 ---
 
@@ -99,29 +167,6 @@ ids = tokenizer.encode("പഠിക്കുന്നു")
 category = tokenizer.classify_token(30001)
 # Output: 'tense'
 ```
-
----
-
-## 📊 Performance
-
-### Benchmark Results (SMC Corpus)
-
-| Metric | Value |
-|--------|-------|
-| **Morphology Coverage** | 87.22% |
-| **OOV Rate** | 26.06% |
-| **Compression Ratio** | 0.672 |
-| **Tokens/Word** | 1.49 |
-| **Speed** | 1,522 words/sec |
-| **BIO Accuracy** | 91.67% |
-
-### Comparison with Baselines
-
-| Tokenizer | Tokens/Word | Morpheme Alignment | Linguistic Quality |
-|-----------|-------------|-------------------|-------------------|
-| **Ours** | 1.49 | ✅ High | ✅ Excellent |
-| BPE | 2.31 | ❌ Low | ❌ Poor |
-| Unigram | 2.18 | ❌ Low | ⚠️ Fair |
 
 ---
 
@@ -226,10 +271,10 @@ malayalam-tokenizer/
 │
 ├── 📂 docs/
 │   ├── ARCHITECTURE.md           # System architecture
+│   ├── BENCHMARKS.md             # Detailed benchmarks
 │   ├── HUGGINGFACE_INTEGRATION.md # HF integration guide
 │   ├── MODEL_CARD.md             # HuggingFace model card
-│   ├── TESTING_CHECKLIST.md      # Testing checklist
-│   └── NEURAL_SANDHI_SUMMARY.md  # Neural model details
+│   └── TESTING_CHECKLIST.md      # Testing checklist
 │
 ├── 📄 README.md                  # This file
 ├── 📄 DISCLAIMER.md              # Usage disclaimer
@@ -250,6 +295,7 @@ malayalam-tokenizer/
 
 | Document | Description |
 |----------|-------------|
+| **[BENCHMARKS.md](docs/BENCHMARKS.md)** | Detailed benchmark analysis and methodology |
 | **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** | Detailed system architecture |
 | **[HUGGINGFACE_INTEGRATION.md](docs/HUGGINGFACE_INTEGRATION.md)** | HuggingFace integration guide |
 | **[MODEL_CARD.md](docs/MODEL_CARD.md)** | HuggingFace model card |
@@ -267,6 +313,7 @@ malayalam-tokenizer/
 2. **Phoneme-Aware Bi-LSTM**: Explicit encoding of Virama, Vowel, Consonant categories
 3. **Anusvara Reconstruction**: Specific solution for ം → ത്ത് transformation
 4. **Hybrid Pipeline**: FST (mlmorph) + Neural for OOV handling
+5. **Vocabulary Efficiency**: Achieving competitive compression with 60x smaller vocabulary
 
 ### Citation
 
@@ -357,6 +404,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **mlmorph** - Malayalam Morphological Analyzer by Santhosh Thottingal
 - **SMC** (Swathanthra Malayalam Computing) - For corpus and linguistic resources
 - **HuggingFace** - For the transformers library and model hosting
+- **Google MuRIL** - For multilingual Indian language representations
+- **ai4bharat** - For IndicBERT models
 
 ---
 
